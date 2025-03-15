@@ -17,59 +17,50 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include "lvgl.h"
+#include "ui/ui.h"
 
 static const char *TAG = "MyDisplay";
 
 /* LCD size */
-#define DISP_HOR_RES   320 // 320
-#define DISP_VER_RES   240 // 240
+#define DISP_HOR_RES 320 // 320
+#define DISP_VER_RES 240 // 240
 
 /* LCD settings */
 #define DISP_DRAW_BUFF_HEIGHT 50
 
 /* LCD pins */
-#define DISP_SPI_NUM         SPI3_HOST
-#define DISP_GPIO_SCLK       GPIO_NUM_41 // GPIO_NUM_6
-#define DISP_GPIO_MOSI       GPIO_NUM_40 // GPIO_NUM_7
-#define DISP_GPIO_RST        GPIO_NUM_39 // GPIO_NUM_8
-#define DISP_GPIO_DC         GPIO_NUM_44 // GPIO_NUM_4
-#define DISP_GPIO_CS         GPIO_NUM_42 // GPIO_NUM_5
-#define DISP_GPIO_BL         GPIO_NUM_1  // GPIO_NUM_15
+#define DISP_SPI_NUM SPI3_HOST
+#define DISP_GPIO_SCLK GPIO_NUM_12
+#define DISP_GPIO_MOSI GPIO_NUM_11
+#define DISP_GPIO_RST -1 // Not connected
+#define DISP_GPIO_DC GPIO_NUM_47
+#define DISP_GPIO_CS GPIO_NUM_45
+#define DISP_GPIO_BL GPIO_NUM_48
 
-/* Touch settings */
-#define DISP_TOUCH_I2C_NUM       I2C_NUM_1
-#define DISP_TOUCH_I2C_CLK_HZ    400000     // 400000
-
-/* LCD touch pins */
-#define TOUCH_I2C_SCL       GPIO_NUM_21  // GPIO_NUM_21   9
-#define TOUCH_I2C_SDA       GPIO_NUM_14  // GPIO_NUM_14  10
-#define TOUCH_GPIO_INT      GPIO_NUM_38  // GPIO_NUM_38
-#define TOUCH_GPIO_RST      GPIO_NUM_11  // GPIO_NUM_11 // dummy
-
-#define BUFFER_SIZE         (DISP_HOR_RES * DISP_VER_RES * sizeof(uint16_t) / 10)
+#define BUFFER_SIZE (DISP_HOR_RES * DISP_VER_RES * sizeof(uint16_t) / 10)
 
 static esp_lcd_panel_handle_t panel_handle = NULL;
 static esp_lcd_panel_io_handle_t io_handle = NULL;
 static lv_display_t *display = NULL;
 
-static void* buf1 = NULL;
-static void* buf2 = NULL;
+static void *buf1 = NULL;
+static void *buf2 = NULL;
 
 // this gets called when the DMA transfer of the buffer data has completed
 static bool notify_flush_ready(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_io_event_data_t *edata, void *user_ctx)
 {
     lv_display_t *disp = (lv_display_t *)user_ctx;
-    lv_display_flush_ready(disp);  // I have tried to change this to the global display variable, no change
+    lv_display_flush_ready(disp); // I have tried to change this to the global display variable, no change
     return false;
 }
 
-static void flush_cb(lv_display_t* disp, const lv_area_t* area, uint8_t* px_map)
+static void flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 {
     int x1 = area->x1;
     int x2 = area->x2;
     int y1 = area->y1;
     int y2 = area->y2;
-    
+
     // uncomment the following line if the colors are wrong
     lv_draw_sw_rgb565_swap(px_map, (x2 + 1 - x1) * (y2 + 1 - y1)); // I have tried with and without this
 
@@ -82,8 +73,8 @@ static esp_err_t lvgl_init(void)
 
     display = lv_display_create(DISP_HOR_RES, DISP_VER_RES);
 
-    buf1 = heap_caps_calloc(1, BUFFER_SIZE, MALLOC_CAP_INTERNAL |  MALLOC_CAP_DMA);
-    buf2 = heap_caps_calloc(1, BUFFER_SIZE, MALLOC_CAP_INTERNAL |  MALLOC_CAP_DMA);
+    buf1 = heap_caps_calloc(1, BUFFER_SIZE, MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
+    buf2 = heap_caps_calloc(1, BUFFER_SIZE, MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA);
 
     lv_display_set_buffers(display, buf1, buf2, BUFFER_SIZE, LV_DISPLAY_RENDER_MODE_PARTIAL);
 
@@ -92,16 +83,18 @@ static esp_err_t lvgl_init(void)
 
     lv_display_set_flush_cb(display, flush_cb);
 
-     const esp_lcd_panel_io_callbacks_t cbs = {
+    const esp_lcd_panel_io_callbacks_t cbs = {
         .on_color_trans_done = notify_flush_ready,
     };
     /* Register done callback */
-    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_register_event_callbacks(io_handle, &cbs, display), TAG, "esp_lcd_panel_io_register_event_callbacks error"); // I have tried to use 
+    ESP_RETURN_ON_ERROR(esp_lcd_panel_io_register_event_callbacks(io_handle, &cbs, display), TAG, "esp_lcd_panel_io_register_event_callbacks error"); // I have tried to use
     ESP_RETURN_ON_ERROR(esp_lcd_panel_init(panel_handle), TAG, "esp_lcd_panel_init error");
 
     // Hardware rotate 90°
-    uint8_t madctl = 0x60;  // Rotate reg 0x00 0x60 0xC0 0xA0
+    uint8_t madctl = 0x60; // Rotate reg 0x00 0x60 0xC0 0xA0
     esp_lcd_panel_io_tx_param(io_handle, 0x36, &madctl, 1);
+
+    esp_lcd_panel_io_tx_param(io_handle, 0x21, NULL, 0); // Inverted color fix (to get normal colors)
 
     return ESP_OK;
 }
@@ -110,24 +103,23 @@ static esp_err_t display_init(void)
 {
     // LCD backlight and DC
     gpio_config_t gpio_cfg = {
-        .pin_bit_mask = (1ULL << DISP_GPIO_BL) | (1ULL << DISP_GPIO_DC) | (1ULL << DISP_GPIO_RST),
+        .pin_bit_mask = (1ULL << DISP_GPIO_BL) | (1ULL << DISP_GPIO_DC),
         .mode = GPIO_MODE_OUTPUT,
     };
     ESP_ERROR_CHECK(gpio_config(&gpio_cfg));
 
     gpio_set_level(DISP_GPIO_BL, 1); // Turn on backlight
     gpio_set_level(DISP_GPIO_DC, 1); // Default to data mode
-    gpio_set_level(DISP_GPIO_RST, 1); // Default to high
 
     // LCD initialization
     ESP_LOGD(TAG, "Initialize SPI bus");
-    spi_bus_config_t buscfg = { };
-        buscfg.sclk_io_num = DISP_GPIO_SCLK;
-        buscfg.mosi_io_num = DISP_GPIO_MOSI;
-        buscfg.miso_io_num = GPIO_NUM_NC;
-        buscfg.quadwp_io_num = GPIO_NUM_NC;
-        buscfg.quadhd_io_num = GPIO_NUM_NC;
-        buscfg.max_transfer_sz = BUFFER_SIZE; // DISP_HOR_RES * DISP_DRAW_BUFF_HEIGHT * sizeof(uint16_t);
+    spi_bus_config_t buscfg = {};
+    buscfg.sclk_io_num = DISP_GPIO_SCLK;
+    buscfg.mosi_io_num = DISP_GPIO_MOSI;
+    buscfg.miso_io_num = GPIO_NUM_NC;
+    buscfg.quadwp_io_num = GPIO_NUM_NC;
+    buscfg.quadhd_io_num = GPIO_NUM_NC;
+    buscfg.max_transfer_sz = BUFFER_SIZE; // DISP_HOR_RES * DISP_DRAW_BUFF_HEIGHT * sizeof(uint16_t);
     ESP_RETURN_ON_ERROR(spi_bus_initialize(SPI3_HOST, &buscfg, SPI_DMA_CH_AUTO), TAG, "SPI init failed");
 
     esp_lcd_panel_io_spi_config_t io_config = {
@@ -145,8 +137,7 @@ static esp_err_t display_init(void)
         .reset_gpio_num = DISP_GPIO_RST,
         .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
         .bits_per_pixel = 16,
-        .flags = { .reset_active_high = 0 }
-    };
+        .flags = {.reset_active_high = 0}};
 
     ESP_RETURN_ON_ERROR(esp_lcd_new_panel_st7789(io_handle, &panel_config, &panel_handle), TAG, "Display init failed");
 
@@ -170,7 +161,7 @@ static void lvgl_tick_increment(void *arg)
 
 static esp_err_t lvgl_tick_init(void)
 {
-    esp_timer_handle_t  tick_timer;
+    esp_timer_handle_t tick_timer;
 
     // Tick interface for LVGL (using esp_timer to generate 2ms periodic event)
     const esp_timer_create_args_t lvgl_tick_timer_args = {
@@ -181,9 +172,10 @@ static esp_err_t lvgl_tick_init(void)
     return esp_timer_start_periodic(tick_timer, 2 * 1000); // 2 ms
 }
 
-static void lvgl_task(void *arg) {
+static void lvgl_task(void *arg)
+{
 
-    vTaskDelay(1000/portTICK_PERIOD_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     esp_log_level_set("lcd_panel", ESP_LOG_VERBOSE);
     esp_log_level_set("lcd_panel.st7789", ESP_LOG_VERBOSE);
@@ -191,56 +183,49 @@ static void lvgl_task(void *arg) {
 
     esp_err_t ret = display_init();
 
-    if (ret != ESP_OK) {
+    if (ret != ESP_OK)
+    {
         ESP_LOGE(TAG, "ST7789 failed to initilize");
-        while (1);
+        while (1)
+            ;
     }
     ret = lvgl_init();
-    if (ret != ESP_OK) {
+    if (ret != ESP_OK)
+    {
         ESP_LOGE(TAG, "LVGL Display failed to initialize");
-        while (1);
+        while (1)
+            ;
     }
 
     ret = lvgl_tick_init();
-    if (ret != ESP_OK) {
+    if (ret != ESP_OK)
+    {
         ESP_LOGE(TAG, "Timer failed to initialize");
-        while (1);
+        while (1)
+            ;
     }
-
-    // Create a simple label
-    lv_obj_t *label = lv_label_create(lv_scr_act());
-    lv_label_set_text(label, "Hello, LVGL!");
-    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
-
-    long curtime = esp_timer_get_time()/1000;
-    int counter = 0;
+    ui_init();
 
     // Handle LVGL tasks
-    while (1) {
+    while (1)
+    {
         vTaskDelay(pdMS_TO_TICKS(10));
         lv_task_handler();
-
-        if (esp_timer_get_time()/1000 - curtime > 1000) {
-            curtime = esp_timer_get_time()/1000;
-
-            char textlabel[20];
-            sprintf(textlabel, "Running: %u\n", counter);
-            printf(textlabel);
-            lv_label_set_text(label, textlabel);
-            counter++;
-        }
+        ui_tick();
     }
 }
 
-void app_main() {
+void app_main()
+{
 
-    vTaskDelay(1000/portTICK_PERIOD_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     TaskHandle_t taskHandle = NULL;
-    BaseType_t res = xTaskCreatePinnedToCore(lvgl_task, "LVGL task", 8192, NULL, 4, &taskHandle, 0); // stack, params, prio, handle, core
+    xTaskCreatePinnedToCore(lvgl_task, "LVGL task", 8192, NULL, 4, &taskHandle, 0); // stack, params, prio, handle, core
 
-    while(true) {
+    while (true)
+    {
 
-        vTaskDelay(100/portTICK_PERIOD_MS);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
