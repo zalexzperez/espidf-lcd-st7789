@@ -12,7 +12,7 @@
       "imports": [],
       "flowSupport": true,
       "displayWidth": 320,
-      "displayHeight": 240,
+      "displayHeight": 172,
       "displayBorderRadius": 22.75,
       "darkTheme": true,
       "colorFormat": "BGR",
@@ -153,7 +153,7 @@
               "objID": "608960d6-207a-47bf-e8ae-d90f73b1a18a",
               "type": "LVGLPanelWidget",
               "left": 0,
-              "top": 80,
+              "top": 46,
               "width": 320,
               "height": 81,
               "customInputs": [],
@@ -312,7 +312,7 @@
             "definition": {
               "MAIN": {
                 "DEFAULT": {
-                  "bg_color": "#ff0000"
+                  "bg_color": "#690000"
                 }
               }
             }
@@ -335,7 +335,7 @@
           "type": "SetVariableActionComponent",
           "left": 588,
           "top": 203,
-          "width": 207,
+          "width": 208,
           "height": 57,
           "customInputs": [],
           "customOutputs": [],
@@ -379,7 +379,7 @@
       "left": 0,
       "top": 0,
       "width": 320,
-      "height": 240,
+      "height": 172,
       "createAtStart": true,
       "deleteOnScreenUnload": false
     }

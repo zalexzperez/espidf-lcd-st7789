@@ -23,7 +23,7 @@ static const char *TAG = "MyDisplay";
 
 /* LCD size */
 #define DISP_HOR_RES 320 // 320
-#define DISP_VER_RES 240 // 240
+#define DISP_VER_RES 172 // 240
 
 /* LCD settings */
 #define DISP_DRAW_BUFF_HEIGHT 50
@@ -58,8 +58,8 @@ static void flush_cb(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 {
     int x1 = area->x1;
     int x2 = area->x2;
-    int y1 = area->y1;
-    int y2 = area->y2;
+    int y1 = area->y1 + 34; // Offset image to compensate for smaller 172px resolution
+    int y2 = area->y2 + 34; // Offset image to compensate for smaller 172px resolution
 
     // uncomment the following line if the colors are wrong
     lv_draw_sw_rgb565_swap(px_map, (x2 + 1 - x1) * (y2 + 1 - y1)); // I have tried with and without this
@@ -146,6 +146,8 @@ static esp_err_t display_init(void)
 
     // Initialize LCD panel
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
+
+    // Vendor specific settings
 
     // Turn on the screen
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
