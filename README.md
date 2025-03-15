@@ -21,7 +21,7 @@ Unfortunately, there's still tearing in the slider knob:
 
 ### About those red bands
 They are simply part of the background. 
-However, my display's resolution is 172x320. If I set the resolution to 172 like this: `#define DISP_VER_RES 172` (and also set it in EEZ Studio), the image doesn’t span the entire height, leaving a disabled area at the bottom with what seems power-up garbage. With FrankBJensen's UI, it looks like this:
+However, my display's resolution is 172x320. If I set `#define DISP_VER_RES 172` (and also set it in EEZ Studio), the image doesn’t span the entire height, leaving a disabled area at the bottom with what seems power-up garbage. With FrankBJensen's UI, it looks like this:
 ![image](https://github.com/user-attachments/assets/39bbd574-205c-40db-af19-0c0fee7d5c35). 
 
 This is certainly a huge problem, as I'm unable to design the UI properly if I need to set it to the default `240` value.
