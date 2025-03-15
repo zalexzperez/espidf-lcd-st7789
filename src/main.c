@@ -22,8 +22,8 @@
 static const char *TAG = "MyDisplay";
 
 /* LCD size */
-#define DISP_HOR_RES 320 // 320
-#define DISP_VER_RES 172 // 240
+#define DISP_HOR_RES 320
+#define DISP_VER_RES 172
 
 /* LCD settings */
 #define DISP_DRAW_BUFF_HEIGHT 50
@@ -37,7 +37,7 @@ static const char *TAG = "MyDisplay";
 #define DISP_GPIO_CS GPIO_NUM_45
 #define DISP_GPIO_BL GPIO_NUM_48
 
-#define BUFFER_SIZE (DISP_HOR_RES * DISP_VER_RES * sizeof(uint16_t) / 10)
+#define BUFFER_SIZE (DISP_HOR_RES * DISP_VER_RES * sizeof(uint16_t) / 8)
 
 static esp_lcd_panel_handle_t panel_handle = NULL;
 static esp_lcd_panel_io_handle_t io_handle = NULL;
@@ -120,7 +120,7 @@ static esp_err_t display_init(void)
     buscfg.quadwp_io_num = GPIO_NUM_NC;
     buscfg.quadhd_io_num = GPIO_NUM_NC;
     buscfg.max_transfer_sz = BUFFER_SIZE; // DISP_HOR_RES * DISP_DRAW_BUFF_HEIGHT * sizeof(uint16_t);
-    ESP_RETURN_ON_ERROR(spi_bus_initialize(SPI3_HOST, &buscfg, SPI_DMA_CH_AUTO), TAG, "SPI init failed");
+    ESP_RETURN_ON_ERROR(spi_bus_initialize(DISP_SPI_NUM, &buscfg, SPI_DMA_CH_AUTO), TAG, "SPI init failed");
 
     esp_lcd_panel_io_spi_config_t io_config = {
         .dc_gpio_num = DISP_GPIO_DC,
@@ -131,7 +131,7 @@ static esp_err_t display_init(void)
         .spi_mode = 0,
         .trans_queue_depth = 10,
     };
-    ESP_RETURN_ON_ERROR(esp_lcd_new_panel_io_spi(SPI3_HOST, &io_config, &io_handle), TAG, "SPI init failed");
+    ESP_RETURN_ON_ERROR(esp_lcd_new_panel_io_spi(DISP_SPI_NUM, &io_config, &io_handle), TAG, "SPI init failed");
 
     esp_lcd_panel_dev_config_t panel_config = {
         .reset_gpio_num = DISP_GPIO_RST,
@@ -224,10 +224,4 @@ void app_main()
 
     TaskHandle_t taskHandle = NULL;
     xTaskCreatePinnedToCore(lvgl_task, "LVGL task", 8192, NULL, 4, &taskHandle, 0); // stack, params, prio, handle, core
-
-    while (true)
-    {
-
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-    }
 }
