@@ -25,4 +25,16 @@ However, my display's resolution is 172x320. If I set `#define DISP_VER_RES 172`
 ![image](https://github.com/user-attachments/assets/39bbd574-205c-40db-af19-0c0fee7d5c35). 
 
 This is certainly a huge problem, as I'm unable to design the UI properly if I need to set it to the default `240` value.
+Edit: the resolution problem is now fixed by making an offset adjustment in the flush function! 
+
+Edit2: After increasing buffer sizes, these are the results:
+
+Divided by 8:
+https://github.com/user-attachments/assets/b73c27c6-9fbb-4317-8aa0-40f8beb4f5de
+
+Divided by 6:
+https://github.com/user-attachments/assets/329c9815-e807-4460-b84b-ea179d666b7e
+
+Divided by 4:
+https://github.com/user-attachments/assets/a5bcbf3e-a81f-476e-86d1-af0ebf8a89eb
 
