@@ -130,19 +130,17 @@ void create_screen_second() {
     lv_obj_set_pos(obj, 0, 0);
     lv_obj_set_size(obj, 320, 172);
     lv_obj_add_event_cb(obj, event_handler_cb_second_second, LV_EVENT_ALL, flowState);
-    lv_obj_set_style_bg_color(obj, lv_color_hex(0xff00960a), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(obj, lv_color_hex(0xff039a00), LV_PART_MAIN | LV_STATE_DEFAULT);
     {
         lv_obj_t *parent_obj = obj;
         {
             lv_obj_t *obj = lv_label_create(parent_obj);
-            lv_obj_set_pos(obj, 11, 60);
+            lv_obj_set_pos(obj, 67, 70);
             lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
             lv_label_set_text(obj, "Hello, world!");
-            lv_obj_set_style_text_font(obj, &lv_font_montserrat_48, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &lv_font_montserrat_30, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
     }
-    
-    eez_flow_delete_screen_on_unload(SCREEN_ID_SECOND - 1);
     
     tick_screen_second();
 }
@@ -217,4 +215,5 @@ void create_screens() {
     lv_disp_set_theme(dispp, theme);
     
     create_screen_main();
+    create_screen_second();
 }

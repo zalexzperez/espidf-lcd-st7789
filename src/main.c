@@ -29,7 +29,7 @@ static const char *TAG = "MyDisplay";
 #define DISP_DRAW_BUFF_HEIGHT 50
 
 /* LCD pins */
-#define DISP_SPI_NUM SPI3_HOST
+#define DISP_SPI_NUM SPI2_HOST
 #define DISP_GPIO_SCLK GPIO_NUM_12
 #define DISP_GPIO_MOSI GPIO_NUM_11
 #define DISP_GPIO_RST -1 // Not connected
@@ -224,4 +224,6 @@ void app_main()
 
     TaskHandle_t taskHandle = NULL;
     xTaskCreatePinnedToCore(lvgl_task, "LVGL task", 8192, NULL, 4, &taskHandle, 0); // stack, params, prio, handle, core
+    ESP_LOGI("CoreCheck", "Running on core %d", xPortGetCoreID());
+    
 }
